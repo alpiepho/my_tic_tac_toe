@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#1e293b"/>
+
+  <!-- Grid lines (blue) -->
+  <line x1="176" y1="88" x2="176" y2="424" stroke="#3b82f6" stroke-width="20" stroke-linecap="round"/>
+  <line x1="336" y1="88" x2="336" y2="424" stroke="#3b82f6" stroke-width="20" stroke-linecap="round"/>
+  <line x1="88"  y1="176" x2="424" y2="176" stroke="#3b82f6" stroke-width="20" stroke-linecap="round"/>
+  <line x1="88"  y1="336" x2="424" y2="336" stroke="#3b82f6" stroke-width="20" stroke-linecap="round"/>
+
+  <!-- Top-left cell: X (blue) -->
+  <line x1="108" y1="108" x2="156" y2="156" stroke="#3b82f6" stroke-width="22" stroke-linecap="round"/>
+  <line x1="156" y1="108" x2="108" y2="156" stroke="#3b82f6" stroke-width="22" stroke-linecap="round"/>
+
+  <!-- Center cell: O (red) -->
+  <circle cx="256" cy="256" r="44" fill="none" stroke="#ef4444" stroke-width="22"/>
+
+  <!-- Bottom-right cell: X (blue) -->
+  <line x1="356" y1="356" x2="404" y2="404" stroke="#3b82f6" stroke-width="22" stroke-linecap="round"/>
+  <line x1="404" y1="356" x2="356" y2="404" stroke="#3b82f6" stroke-width="22" stroke-linecap="round"/>
+
+  <!-- Top-right cell: O (red) -->
+  <circle cx="380" cy="132" r="32" fill="none" stroke="#ef4444" stroke-width="18"/>
+</svg>
