@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic-Tac-Toe PWA — Code Map</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2d3148;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --accent: #6366f1;
+    --node-ui: #1e3a5f;
+    --node-ui-border: #3b82f6;
+    --node-logic: #1a3a2a;
+    --node-logic-border: #10b981;
+    --node-pwa: #3b2a5a;
+    --node-pwa-border: #a855f7;
+    --node-data: #3a2a1a;
+    --node-data-border: #f97316;
+    --node-external: #3a1a2a;
+    --node-external-border: #ec4899;
+  }
+  body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Header */
+  header { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  header h1 { font-size: 14px; font-weight: 600; color: var(--text); }
+  header span { font-size: 12px; color: var(--muted); }
+
+  /* Main layout */
+  .layout { display: flex; flex: 1; overflow: hidden; }
+
+  /* Sidebar */
+  .sidebar { width: 220px; flex-shrink: 0; border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+  .sidebar-section { padding: 12px; border-bottom: 1px solid var(--border); }
+  .sidebar-section h3 { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+
+  /* Presets */
+  .presets { display: flex; flex-direction: column; gap: 4px; }
+  .preset-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-size: 12px; padding: 6px 10px; border-radius: 6px; cursor: pointer; text-align: left; transition: all 0.15s; }
+  .preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .preset-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* Layer toggles */
+  .layer-toggles { display: flex; flex-direction: column; gap: 5px; }
+  .layer-toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; padding: 3px 0; }
+  .layer-toggle input { display: none; }
+  .layer-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; transition: opacity 0.2s; }
+  .layer-toggle.off .layer-dot { opacity: 0.3; }
+  .layer-toggle.off span { color: var(--muted); }
+  .layer-name { flex: 1; }
+
+  /* Connection filters */
+  .conn-filters { display: flex; flex-direction: column; gap: 5px; }
+  .conn-filter { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; padding: 3px 0; }
+  .conn-filter input { display: none; }
+  .conn-line { width: 20px; height: 2px; flex-shrink: 0; }
+  .conn-filter.off .conn-line { opacity: 0.3; }
+  .conn-filter.off span { color: var(--muted); }
+
+  /* Comments */
+  .comments-scroll { flex: 1; overflow-y: auto; padding: 12px; }
+  .no-comments { font-size: 12px; color: var(--muted); font-style: italic; }
+  .comment-item { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin-bottom: 6px; font-size: 12px; }
+  .comment-target { font-weight: 600; color: var(--accent); margin-bottom: 3px; font-size: 11px; }
+  .comment-text { color: var(--text); line-height: 1.4; margin-bottom: 6px; }
+  .comment-delete { background: none; border: none; color: var(--muted); font-size: 11px; cursor: pointer; padding: 0; }
+  .comment-delete:hover { color: #ef4444; }
+
+  /* Canvas area */
+  .canvas-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .canvas-wrap { flex: 1; position: relative; overflow: hidden; background: var(--bg); }
+  svg#diagram { width: 100%; height: 100%; cursor: grab; display: block; }
+  svg#diagram:active { cursor: grabbing; }
+
+  /* Zoom controls */
+  .zoom-controls { position: absolute; top: 12px; right: 12px; display: flex; gap: 4px; z-index: 10; }
+  .zoom-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: border-color 0.15s; }
+  .zoom-btn:hover { border-color: var(--accent); }
+
+  /* Legend */
+  .legend { position: absolute; bottom: 12px; left: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 11px; z-index: 10; }
+  .legend-title { font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; color: var(--muted); }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 50%; border: 2px solid; }
+
+  /* Prompt area */
+  .prompt-area { border-top: 1px solid var(--border); padding: 12px 16px; flex-shrink: 0; background: var(--surface); }
+  .prompt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .prompt-header span { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; }
+  .copy-btn { background: var(--accent); border: none; color: #fff; font-size: 12px; padding: 5px 12px; border-radius: 6px; cursor: pointer; transition: opacity 0.15s; }
+  .copy-btn:hover { opacity: 0.85; }
+  .prompt-text { font-family: 'Courier New', monospace; font-size: 12px; color: #94a3b8; line-height: 1.5; max-height: 80px; overflow-y: auto; white-space: pre-wrap; }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; width: 380px; max-width: 90vw; }
+  .modal h3 { font-size: 14px; margin-bottom: 4px; }
+  .modal-subtitle { font-size: 11px; color: var(--muted); margin-bottom: 12px; font-family: monospace; }
+  .modal textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 8px 10px; font-size: 12px; font-family: system-ui, sans-serif; resize: vertical; min-height: 80px; outline: none; }
+  .modal textarea:focus { border-color: var(--accent); }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+  .modal-actions button { font-size: 12px; padding: 6px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); }
+  .btn-cancel { background: none; color: var(--muted); }
+  .btn-cancel:hover { color: var(--text); }
+  .btn-save { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-save:hover { opacity: 0.85; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Tic-Tac-Toe PWA — Code Map</h1>
+  <span>Click any node to add a comment · Scroll to zoom · Drag to pan</span>
+</header>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <h3>View Preset</h3>
+      <div class="presets">
+        <button class="preset-btn active" onclick="applyPreset('full')">Full System</button>
+        <button class="preset-btn" onclick="applyPreset('frontend')">UI & Styling</button>
+        <button class="preset-btn" onclick="applyPreset('logic')">Game Logic</button>
+        <button class="preset-btn" onclick="applyPreset('pwa')">PWA & Offline</button>
+        <button class="preset-btn" onclick="applyPreset('dataflow')">Data Flow</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Layers</h3>
+      <div class="layer-toggles" id="layerToggles">
+        <label class="layer-toggle" data-layer="ui">
+          <input type="checkbox" checked onchange="toggleLayer('ui', this.checked)">
+          <div class="layer-dot" style="background:#3b82f6"></div>
+          <span class="layer-name">UI / Shell</span>
+        </label>
+        <label class="layer-toggle" data-layer="logic">
+          <input type="checkbox" checked onchange="toggleLayer('logic', this.checked)">
+          <div class="layer-dot" style="background:#10b981"></div>
+          <span class="layer-name">Game Logic</span>
+        </label>
+        <label class="layer-toggle" data-layer="pwa">
+          <input type="checkbox" checked onchange="toggleLayer('pwa', this.checked)">
+          <div class="layer-dot" style="background:#a855f7"></div>
+          <span class="layer-name">PWA / Offline</span>
+        </label>
+        <label class="layer-toggle" data-layer="data">
+          <input type="checkbox" checked onchange="toggleLayer('data', this.checked)">
+          <div class="layer-dot" style="background:#f97316"></div>
+          <span class="layer-name">Data / Storage</span>
+        </label>
+        <label class="layer-toggle" data-layer="external">
+          <input type="checkbox" checked onchange="toggleLayer('external', this.checked)">
+          <div class="layer-dot" style="background:#ec4899"></div>
+          <span class="layer-name">External</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Connections</h3>
+      <div class="conn-filters" id="connFilters">
+        <label class="conn-filter" data-type="data-flow">
+          <input type="checkbox" checked onchange="toggleConn('data-flow', this.checked)">
+          <div class="conn-line" style="background:#3b82f6"></div>
+          <span>Data Flow</span>
+        </label>
+        <label class="conn-filter" data-type="renders">
+          <input type="checkbox" checked onchange="toggleConn('renders', this.checked)">
+          <div class="conn-line" style="background:#10b981; border-top: 2px dashed #10b981; height:0"></div>
+          <span>Renders / Uses</span>
+        </label>
+        <label class="conn-filter" data-type="dependency">
+          <input type="checkbox" checked onchange="toggleConn('dependency', this.checked)">
+          <div class="conn-line" style="background:#6b7280"></div>
+          <span>Dependency</span>
+        </label>
+        <label class="conn-filter" data-type="event">
+          <input type="checkbox" checked onchange="toggleConn('event', this.checked)">
+          <div class="conn-line" style="background:#ef4444"></div>
+          <span>Event / Async</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="sidebar-section" style="flex-shrink:0">
+      <h3>Comments (<span id="commentCount">0</span>)</h3>
+    </div>
+    <div class="comments-scroll" id="commentsList">
+      <p class="no-comments">Click a node to add a comment about that component.</p>
+    </div>
+  </div>
+
+  <!-- Canvas -->
+  <div class="canvas-area">
+    <div class="canvas-wrap">
+      <svg id="diagram" viewBox="0 0 900 580"></svg>
+
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="zoomIn()">+</button>
+        <button class="zoom-btn" onclick="zoomOut()">−</button>
+        <button class="zoom-btn" onclick="zoomReset()" title="Reset">⊙</button>
+      </div>
+
+      <div class="legend">
+        <div class="legend-title">Layers</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#1e3a5f;border-color:#3b82f6"></div>UI / Shell</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#1a3a2a;border-color:#10b981"></div>Game Logic</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#3b2a5a;border-color:#a855f7"></div>PWA / Offline</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#3a2a1a;border-color:#f97316"></div>Data / Storage</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#3a1a2a;border-color:#ec4899"></div>External</div>
+      </div>
+    </div>
+
+    <div class="prompt-area">
+      <div class="prompt-header">
+        <span>Generated Prompt</span>
+        <button class="copy-btn" id="copyBtn" onclick="copyPrompt()">Copy Prompt</button>
+      </div>
+      <div class="prompt-text" id="promptText"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Comment Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitle"></h3>
+    <div class="modal-subtitle" id="modalSubtitle"></div>
+    <textarea id="modalTextarea" placeholder="What do you want to know or change about this component?"></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveComment()">Save Comment</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+const state = {
+  layers: { ui: true, logic: true, pwa: true, data: true, external: true },
+  conns: { 'data-flow': true, renders: true, dependency: true, event: true },
+  comments: [],
+  zoom: 1,
+  pan: { x: 0, y: 0 },
+  activePreset: 'full',
+  modalNode: null
+};
+
+let isPanning = false, panStart = {x:0,y:0};
+
+// ─── Nodes ───────────────────────────────────────────────────────────────────
+const nodes = [
+  // UI Layer (top band, y ~40-120)
+  { id: 'index', label: 'index.html', subtitle: '10KB · App Shell', detail: 'HTML structure, modals, header, game board (9-cell grid), result overlay, settings & info modals', x: 100, y: 50, w: 150, h: 52, layer: 'ui', fill: '#1e3a5f', stroke: '#3b82f6' },
+  { id: 'style', label: 'style.css', subtitle: '17KB · Theming & Animations', detail: 'CSS custom properties for dark/light themes, responsive grid, animations: confetti, cell pop, shake, bounce', x: 320, y: 50, w: 150, h: 52, layer: 'ui', fill: '#1e3a5f', stroke: '#3b82f6' },
+  { id: 'icon', label: 'icon.svg', subtitle: 'App Icon', detail: 'SVG tic-tac-toe board icon with X/O pieces in brand colors', x: 540, y: 50, w: 130, h: 52, layer: 'ui', fill: '#1e3a5f', stroke: '#3b82f6' },
+
+  // Logic Layer (y ~155-340)
+  { id: 'appjs', label: 'app.js', subtitle: '21KB · Core Engine', detail: 'Central module containing all game logic, AI, state management, UI updates, animations, and event wiring', x: 160, y: 165, w: 160, h: 52, layer: 'logic', fill: '#1a3a2a', stroke: '#10b981' },
+  { id: 'state', label: 'State Object', subtitle: 'app.js · State Mgmt', detail: 'Single source of truth: board[], currentPlayer, gameStatus, settings (theme, mode, difficulty, playerNames)', x: 30, y: 270, w: 145, h: 52, layer: 'logic', fill: '#1a3a2a', stroke: '#10b981' },
+  { id: 'gamelogic', label: 'Game Logic', subtitle: 'app.js · checkWinner etc.', detail: 'checkWinner(), makeMove(), placeAndCheck(), endGame(), resetGame() — pure game state transitions', x: 200, y: 270, w: 145, h: 52, layer: 'logic', fill: '#1a3a2a', stroke: '#10b981' },
+  { id: 'ai', label: 'AI System', subtitle: 'app.js · getComputerMove()', detail: 'Easy: random moves. Medium: win/block/center heuristic. Hard: minimax with alpha-beta pruning (unbeatable)', x: 370, y: 270, w: 145, h: 52, layer: 'logic', fill: '#1a3a2a', stroke: '#10b981' },
+  { id: 'ui_fns', label: 'UI Functions', subtitle: 'app.js · render*', detail: 'renderBoard(), updateStatus(), updateActivePlayer(), renderStats(), renderNames(), showResult(), launchConfetti()', x: 540, y: 270, w: 145, h: 52, layer: 'logic', fill: '#1a3a2a', stroke: '#10b981' },
+  { id: 'events', label: 'Event Setup', subtitle: 'app.js · setup()', detail: 'Attaches all click handlers for cells, mode toggles, difficulty, theme, modals, name inputs. Registers keyboard (Escape)', x: 710, y: 270, w: 145, h: 52, layer: 'logic', fill: '#1a3a2a', stroke: '#10b981' },
+  { id: 'minimax', label: 'Minimax', subtitle: 'Hard AI Algorithm', detail: 'Recursive minimax with alpha-beta pruning. Scores +10 win, -10 loss, 0 draw. Depth-adjusted for faster wins. Unbeatable.', x: 370, y: 370, w: 145, h: 52, layer: 'logic', fill: '#1a3a2a', stroke: '#10b981' },
+
+  // PWA Layer (right side, y ~155-220)
+  { id: 'sw', label: 'sw.js', subtitle: '33 lines · Service Worker', detail: 'Cache-first strategy. Caches index.html, app.js, style.css, manifest.json, icon.svg, QRCode CDN. Works 100% offline.', x: 710, y: 165, w: 145, h: 52, layer: 'pwa', fill: '#3b2a5a', stroke: '#a855f7' },
+  { id: 'manifest', label: 'manifest.json', subtitle: 'PWA Config', detail: 'Standalone display mode, theme #3b82f6, bg #0f172a, SVG icon with maskable purpose. Enables home screen install.', x: 540, y: 165, w: 145, h: 52, layer: 'pwa', fill: '#3b2a5a', stroke: '#a855f7' },
+
+  // Data Layer (bottom, y ~440-500)
+  { id: 'localstorage', label: 'localStorage', subtitle: 'Key: ttt_v1', detail: 'Persists: theme, mode, difficulty, playerNames, wins/losses/draws per mode (1P & 2P). Restored on init().', x: 200, y: 450, w: 145, h: 52, layer: 'data', fill: '#3a2a1a', stroke: '#f97316' },
+  { id: 'cache', label: 'Cache API', subtitle: 'Cache: ttt-v1', detail: 'Service worker caches all static assets on install. Cleaned on activate if cache version changes.', x: 710, y: 450, w: 145, h: 52, layer: 'data', fill: '#3a2a1a', stroke: '#f97316' },
+
+  // External
+  { id: 'qrcode', label: 'QRCode.js', subtitle: 'CDN · qrcodejs v1.0', detail: 'Generates QR code pointing to GitHub Pages deployment URL. Fallback hides QR if CDN unavailable.', x: 540, y: 450, w: 145, h: 52, layer: 'external', fill: '#3a1a2a', stroke: '#ec4899' },
+  { id: 'ghpages', label: 'GitHub Pages', subtitle: 'Deployment target', detail: 'Static hosting at alpiepho.github.io/my_tic_tac_toe/ — auto-deploys on push to main.', x: 30, y: 450, w: 145, h: 52, layer: 'external', fill: '#3a1a2a', stroke: '#ec4899' },
+];
+
+// ─── Connections ─────────────────────────────────────────────────────────────
+const connections = [
+  // index.html uses/links files
+  { from: 'index', to: 'style', type: 'dependency', label: '<link>' },
+  { from: 'index', to: 'appjs', type: 'dependency', label: '<script>' },
+  { from: 'index', to: 'manifest', type: 'dependency', label: '<link rel=manifest>' },
+  { from: 'index', to: 'icon', type: 'dependency', label: 'ref' },
+
+  // app.js internal structure
+  { from: 'appjs', to: 'state', type: 'renders', label: 'manages' },
+  { from: 'appjs', to: 'gamelogic', type: 'renders', label: 'contains' },
+  { from: 'appjs', to: 'ai', type: 'renders', label: 'contains' },
+  { from: 'appjs', to: 'ui_fns', type: 'renders', label: 'contains' },
+  { from: 'appjs', to: 'events', type: 'renders', label: 'contains' },
+  { from: 'ai', to: 'minimax', type: 'renders', label: 'Hard mode' },
+
+  // Data flow
+  { from: 'events', to: 'gamelogic', type: 'data-flow', label: 'triggers' },
+  { from: 'gamelogic', to: 'state', type: 'data-flow', label: 'updates' },
+  { from: 'state', to: 'ui_fns', type: 'data-flow', label: 'read by' },
+  { from: 'ui_fns', to: 'index', type: 'data-flow', label: 'updates DOM' },
+  { from: 'style', to: 'index', type: 'data-flow', label: 'styles' },
+  { from: 'gamelogic', to: 'ai', type: 'data-flow', label: '1P mode' },
+
+  // Persistence
+  { from: 'state', to: 'localstorage', type: 'data-flow', label: 'saveSettings()' },
+  { from: 'localstorage', to: 'state', type: 'data-flow', label: 'loadSettings()' },
+
+  // PWA / SW
+  { from: 'appjs', to: 'sw', type: 'event', label: 'registerSW()' },
+  { from: 'sw', to: 'cache', type: 'event', label: 'caches assets' },
+  { from: 'appjs', to: 'qrcode', type: 'dependency', label: 'initQR()' },
+
+  // External
+  { from: 'index', to: 'ghpages', type: 'event', label: 'deployed to' },
+];
+
+// ─── Connection styling ───────────────────────────────────────────────────────
+const connStyle = {
+  'data-flow':   { color: '#3b82f6', dash: '', width: 1.5 },
+  'renders':     { color: '#10b981', dash: '5,3', width: 1.5 },
+  'dependency':  { color: '#6b7280', dash: '2,3', width: 1.2 },
+  'event':       { color: '#ef4444', dash: '8,4', width: 1.5 },
+};
+
+// ─── Presets ─────────────────────────────────────────────────────────────────
+const presets = {
+  full:     { layers: {ui:true, logic:true, pwa:true, data:true, external:true}, conns: {'data-flow':true, renders:true, dependency:true, event:true} },
+  frontend: { layers: {ui:true, logic:false, pwa:false, data:false, external:false}, conns: {'data-flow':false, renders:false, dependency:true, event:false} },
+  logic:    { layers: {ui:false, logic:true, pwa:false, data:true, external:false}, conns: {'data-flow':true, renders:true, dependency:false, event:false} },
+  pwa:      { layers: {ui:true, logic:false, pwa:true, data:true, external:true}, conns: {'data-flow':false, renders:false, dependency:true, event:true} },
+  dataflow: { layers: {ui:true, logic:true, pwa:false, data:true, external:false}, conns: {'data-flow':true, renders:false, dependency:false, event:false} },
+};
+
+// ─── SVG Helpers ─────────────────────────────────────────────────────────────
+const svgNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs={}) {
+  const e = document.createElementNS(svgNS, tag);
+  for (const [k,v] of Object.entries(attrs)) e.setAttribute(k,v);
+  return e;
+}
+
+// ─── Rendering ───────────────────────────────────────────────────────────────
+function renderDiagram() {
+  const svg = document.getElementById('diagram');
+  svg.innerHTML = '';
+
+  // Defs / arrowheads
+  const defs = el('defs');
+  for (const [type, style] of Object.entries(connStyle)) {
+    const marker = el('marker', { id: `arrow-${type}`, markerWidth:'8', markerHeight:'6', refX:'7', refY:'3', orient:'auto' });
+    const poly = el('polygon', { points:'0 0, 8 3, 0 6', fill: style.color });
+    marker.appendChild(poly);
+    defs.appendChild(marker);
+  }
+  svg.appendChild(defs);
+
+  // Transform group for pan/zoom
+  const g = el('g', { transform: `translate(${state.pan.x},${state.pan.y}) scale(${state.zoom})` });
+  svg.appendChild(g);
+
+  const visibleIds = new Set(nodes.filter(n => state.layers[n.layer]).map(n => n.id));
+
+  // Draw connections
+  for (const c of connections) {
+    if (!state.conns[c.type]) continue;
+    if (!visibleIds.has(c.from) || !visibleIds.has(c.to)) continue;
+    const fromNode = nodes.find(n => n.id === c.from);
+    const toNode = nodes.find(n => n.id === c.to);
+    if (!fromNode || !toNode) continue;
+    drawConnection(g, fromNode, toNode, c);
+  }
+
+  // Draw nodes
+  for (const node of nodes) {
+    if (!visibleIds.has(node.id)) continue;
+    drawNode(g, node);
+  }
+}
+
+function drawConnection(g, from, to, conn) {
+  const style = connStyle[conn.type];
+  const fx = from.x + from.w / 2, fy = from.y + from.h / 2;
+  const tx = to.x + to.w / 2, ty = to.y + to.h / 2;
+  const dx = tx - fx, dy = ty - fy;
+  const cx1 = fx + dx * 0.4, cy1 = fy;
+  const cx2 = tx - dx * 0.4, cy2 = ty;
+  const path = el('path', {
+    d: `M ${fx} ${fy} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${tx} ${ty}`,
+    fill: 'none', stroke: style.color, 'stroke-width': style.width,
+    'stroke-dasharray': style.dash,
+    'marker-end': `url(#arrow-${conn.type})`,
+    opacity: '0.65'
+  });
+  g.appendChild(path);
+
+  if (conn.label && Math.abs(dx) + Math.abs(dy) > 60) {
+    const mx = (fx + tx) / 2, my = (fy + ty) / 2;
+    const lbl = el('text', { x: mx, y: my - 4, fill: style.color, 'font-size': '9', 'text-anchor': 'middle', opacity: '0.85' });
+    lbl.textContent = conn.label;
+    g.appendChild(lbl);
+  }
+}
+
+function drawNode(g, node) {
+  const hasComment = state.comments.some(c => c.target === node.id);
+  const grp = el('g', { cursor: 'pointer' });
+  grp.addEventListener('click', () => openModal(node));
+
+  // Shadow glow on hover
+  grp.addEventListener('mouseenter', () => rect.setAttribute('filter', `drop-shadow(0 0 6px ${node.stroke}88)`));
+  grp.addEventListener('mouseleave', () => rect.removeAttribute('filter'));
+
+  const rect = el('rect', {
+    x: node.x, y: node.y, width: node.w, height: node.h,
+    rx: '8', fill: node.fill,
+    stroke: hasComment ? '#f59e0b' : node.stroke,
+    'stroke-width': hasComment ? '2.5' : '1.5'
+  });
+
+  const label = el('text', {
+    x: node.x + node.w / 2, y: node.y + 18,
+    fill: '#e2e8f0', 'font-size': '12', 'font-weight': '600', 'text-anchor': 'middle',
+    'font-family': 'system-ui, sans-serif'
+  });
+  label.textContent = node.label;
+
+  const sub = el('text', {
+    x: node.x + node.w / 2, y: node.y + 34,
+    fill: '#94a3b8', 'font-size': '9.5', 'text-anchor': 'middle',
+    'font-family': 'system-ui, sans-serif'
+  });
+  sub.textContent = node.subtitle;
+
+  grp.appendChild(rect);
+  grp.appendChild(label);
+  grp.appendChild(sub);
+
+  if (hasComment) {
+    const badge = el('circle', { cx: node.x + node.w - 8, cy: node.y + 8, r: '5', fill: '#f59e0b' });
+    const badgeTxt = el('text', { x: node.x + node.w - 8, y: node.y + 12, fill: '#000', 'font-size': '7', 'text-anchor': 'middle', 'font-weight': 'bold' });
+    badgeTxt.textContent = state.comments.filter(c=>c.target===node.id).length;
+    grp.appendChild(badge);
+    grp.appendChild(badgeTxt);
+  }
+
+  g.appendChild(grp);
+}
+
+// ─── Zoom / Pan ───────────────────────────────────────────────────────────────
+function zoomIn()    { state.zoom = Math.min(2.5, state.zoom + 0.15); renderDiagram(); }
+function zoomOut()   { state.zoom = Math.max(0.3, state.zoom - 0.15); renderDiagram(); }
+function zoomReset() { state.zoom = 1; state.pan = {x:0, y:0}; renderDiagram(); }
+
+const svg = document.getElementById('diagram');
+svg.addEventListener('wheel', e => {
+  e.preventDefault();
+  state.zoom = Math.max(0.3, Math.min(2.5, state.zoom - e.deltaY * 0.001));
+  renderDiagram();
+}, { passive: false });
+
+svg.addEventListener('mousedown', e => { isPanning = true; panStart = {x: e.clientX - state.pan.x, y: e.clientY - state.pan.y}; });
+window.addEventListener('mousemove', e => { if (!isPanning) return; state.pan.x = e.clientX - panStart.x; state.pan.y = e.clientY - panStart.y; renderDiagram(); });
+window.addEventListener('mouseup', () => isPanning = false);
+
+// ─── Layer / Connection Toggles ───────────────────────────────────────────────
+function toggleLayer(layer, on) {
+  state.layers[layer] = on;
+  const lbl = document.querySelector(`.layer-toggle[data-layer="${layer}"]`);
+  if (lbl) lbl.classList.toggle('off', !on);
+  state.activePreset = null;
+  syncPresetButtons();
+  renderAll();
+}
+
+function toggleConn(type, on) {
+  state.conns[type] = on;
+  const lbl = document.querySelector(`.conn-filter[data-type="${type}"]`);
+  if (lbl) lbl.classList.toggle('off', !on);
+  state.activePreset = null;
+  syncPresetButtons();
+  renderAll();
+}
+
+// ─── Presets ─────────────────────────────────────────────────────────────────
+function applyPreset(name) {
+  const p = presets[name];
+  state.layers = {...p.layers};
+  state.conns = {...p.conns};
+  state.activePreset = name;
+
+  // Sync layer toggles
+  for (const [layer, on] of Object.entries(state.layers)) {
+    const lbl = document.querySelector(`.layer-toggle[data-layer="${layer}"]`);
+    if (lbl) { lbl.querySelector('input').checked = on; lbl.classList.toggle('off', !on); }
+  }
+  for (const [type, on] of Object.entries(state.conns)) {
+    const lbl = document.querySelector(`.conn-filter[data-type="${type}"]`);
+    if (lbl) { lbl.querySelector('input').checked = on; lbl.classList.toggle('off', !on); }
+  }
+
+  syncPresetButtons();
+  renderAll();
+}
+
+function syncPresetButtons() {
+  document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+  if (state.activePreset) {
+    const active = document.querySelector(`.preset-btn[onclick="applyPreset('${state.activePreset}')"]`);
+    if (active) active.classList.add('active');
+  }
+}
+
+// ─── Modal ────────────────────────────────────────────────────────────────────
+function openModal(node) {
+  state.modalNode = node;
+  document.getElementById('modalTitle').textContent = node.label;
+  document.getElementById('modalSubtitle').textContent = node.detail;
+  const existing = state.comments.find(c => c.target === node.id);
+  document.getElementById('modalTextarea').value = existing ? existing.text : '';
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('modalTextarea').focus(), 50);
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  state.modalNode = null;
+}
+
+function saveComment() {
+  const text = document.getElementById('modalTextarea').value.trim();
+  const node = state.modalNode;
+  if (!node) return;
+  state.comments = state.comments.filter(c => c.target !== node.id);
+  if (text) state.comments.push({ id: Date.now(), target: node.id, targetLabel: node.label, targetFile: node.subtitle, text });
+  closeModal();
+  renderAll();
+}
+
+document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+window.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ─── Comments sidebar ─────────────────────────────────────────────────────────
+function renderComments() {
+  const list = document.getElementById('commentsList');
+  document.getElementById('commentCount').textContent = state.comments.length;
+  if (!state.comments.length) {
+    list.innerHTML = '<p class="no-comments">Click a node to add a comment about that component.</p>';
+    return;
+  }
+  list.innerHTML = state.comments.map(c => `
+    <div class="comment-item">
+      <div class="comment-target">${c.targetLabel}</div>
+      <div class="comment-text">${c.text}</div>
+      <button class="comment-delete" onclick="deleteComment(${c.id})">✕ Remove</button>
+    </div>
+  `).join('');
+}
+
+function deleteComment(id) {
+  state.comments = state.comments.filter(c => c.id !== id);
+  renderAll();
+}
+
+// ─── Prompt ───────────────────────────────────────────────────────────────────
+function updatePrompt() {
+  const visibleLayers = Object.entries(state.layers).filter(([,v])=>v).map(([k])=>k);
+  const allLayers = Object.keys(state.layers);
+  const showingAll = visibleLayers.length === allLayers.length;
+
+  let text = `This is the Tic-Tac-Toe PWA codebase`;
+  if (!showingAll) {
+    const names = {ui:'UI/Shell', logic:'Game Logic', pwa:'PWA/Offline', data:'Data/Storage', external:'External'};
+    text += `, focusing on the ${visibleLayers.map(l=>names[l]).join(', ')} layer${visibleLayers.length>1?'s':''}`;
+  }
+  text += `. It's a vanilla HTML/CSS/JS app with no build tools — just index.html, app.js, style.css, sw.js, and manifest.json.`;
+
+  if (state.comments.length) {
+    text += `\n\nFeedback on specific components:\n`;
+    for (const c of state.comments) {
+      text += `\n**${c.targetLabel}** (${c.targetFile}):\n${c.text}\n`;
+    }
+  } else {
+    text += `\n\nNo specific component feedback yet. Click any node on the diagram to add comments or questions.`;
+  }
+
+  document.getElementById('promptText').textContent = text;
+}
+
+function copyPrompt() {
+  const text = document.getElementById('promptText').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy Prompt', 1500);
+  });
+}
+
+// ─── Master render ────────────────────────────────────────────────────────────
+function renderAll() {
+  renderDiagram();
+  renderComments();
+  updatePrompt();
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+renderAll();
+</script>
+</body>
+</html>
